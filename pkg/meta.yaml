@@ -1,0 +1,33 @@
+{% set data = load_setup_py_data() %}
+
+package:
+  name: tagger
+  version: {{ data.get('version') }}
+
+source:
+  path: ".."
+
+build:
+  noarch: python
+
+requirements:
+  host:
+    - python>=3.6
+  run:
+    - python>=3.6
+    - numpy
+
+test:
+  imports:
+    - tagger
+  requires:
+    - pytest
+  source_files:
+    - tests
+  commands:
+    - pytest -W ignore::DeprecationWarning
+
+about:
+  home: {{ data.get('url') }}
+  license: {{ data.get('license') }}
+  summary: {{ data.get('description') }}

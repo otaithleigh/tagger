@@ -1,0 +1,8 @@
+# Packaging
+*.egg-info
+dist
+build
+
+# Development
+__pycache__
+.vscode
