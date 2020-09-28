@@ -21,6 +21,7 @@ the type of member (brace, column, beam, etc.), a field for the story of the
 structure, and an incremental number. We'll use one digit for the type, two for
 the story, and two for the number:
 
+>>> from tagger import Tagger
 >>> tagger = Tagger(['type', 'story', 'story', 'num', 'num'])
 
 Examples of valid tags under this specification:
@@ -44,10 +45,12 @@ array([[20312, 20315, 20313],
 An optional argument ``mapping`` can be provided to the tagger to post-process
 the field values. A good example is using an ``Enum`` for the member type:
 
+>>> from enum import Enum
 >>> class MemberType(Enum):
 ...     BRACE = 1
 ...     BEAM = 2
 ...     COLUMN = 3
+...
 >>> tagger = Tagger(['type', 'story', 'num'], mapping={'type': MemberType})
 >>> tagger.process_tag(102)
 Tag(type=<MemberType.BRACE: 1>, story=0, num=2)
