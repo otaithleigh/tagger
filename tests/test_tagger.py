@@ -29,3 +29,10 @@ def test_multidimensional_arrays():
     tagger = Tagger('knncc')
     tags = tagger.tag(3, [4, 5], [6, 7, 8])
     assert np.all(tags == [[30406, 30407, 30408], [30506, 30507, 30508]])
+
+
+def test_max():
+    tagger = Tagger('kkknnnnnncc')
+    assert tagger.max('k') == 999
+    assert tagger.max('n') == 999999
+    assert tagger.max('c') == 99

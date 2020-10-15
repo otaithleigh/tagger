@@ -168,9 +168,8 @@ class Tagger():
             if np.any(value < 0):
                 raise ValueError('All values must be nonnegative integers')
 
-            # Check bounds. E.g. for a field that supports the range 000-999,
-            # there are three digits, so we check that we're below 10**3 = 1000.
-            if np.any(value >= 10**self.spec[field]):
+            # Check bounds.
+            if np.any(value > self.max(field)):
                 raise ValueError(f'{value} exceeds the available digits '
                                  f'for field {field!r}')
 
@@ -186,3 +185,9 @@ class Tagger():
 
         # Squeeze the generated array to remove any singular dimensions.
         return tags.squeeze()
+
+    def max(self, field):
+        """Return the maximum possible value for a field."""
+        # for a field that supports the range 000-999, there are three digits,
+        # so the maximum value is 10**3 - 1 = 999.
+        return 10**self.spec[field] - 1
