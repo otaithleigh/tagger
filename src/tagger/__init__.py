@@ -5,6 +5,10 @@ from collections import namedtuple, OrderedDict
 import numpy as np
 from numpy.lib.recfunctions import unstructured_to_structured
 
+__all__ = [
+    'Tagger',
+]
+
 
 def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
     """Parse a spec, transforming it into an OrderedDict."""
