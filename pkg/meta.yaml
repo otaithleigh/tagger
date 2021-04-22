@@ -5,14 +5,16 @@ package:
   version: {{ data.get('version') }}
 
 source:
-  path: ".."
+  git_url: ".."
 
 build:
   noarch: python
+  script: {{ PYTHON }} -m pip install --no-deps . -vv
 
 requirements:
   host:
     - python>=3.6
+    - pip
   run:
     - python>=3.6
     - numpy
