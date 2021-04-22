@@ -70,7 +70,8 @@ class Tagger():
         digits = list(reversed(self.spec.values()))
         num_places_to_shift = np.cumsum(digits)
         num_places_to_shift = [0, *num_places_to_shift[:-1]]
-        self._num_places_to_shift = OrderedDict(zip(fields, num_places_to_shift))
+        self._num_places_to_shift = OrderedDict(zip(fields,
+                                                    num_places_to_shift))
 
         # Determine ranges for slicing into str representations of tags.
         spec_indices = [spec.index(field) for field in self.spec.keys()]
@@ -309,7 +310,7 @@ class Tagger():
         for i, field in enumerate(self.spec.keys()):
             field_value = values[field].reshape(
                 [-1 if j == i else 1 for j in range(self.num_fields)])
-            tags += field_value*10**self._num_places_to_shift[field]
+            tags += field_value * 10**self._num_places_to_shift[field]
 
         # Squeeze the generated array to remove any singular dimensions.
         return tags.squeeze()
