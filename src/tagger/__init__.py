@@ -91,6 +91,9 @@ class Tagger():
         # Generate dtype for parse_record.
         self.dtype = self._record_dtype()
 
+    #===========================================================================
+    # Parse to named tuples
+    #===========================================================================
     def process_tag(self, tag: int):
         """Process a single tag.
 
@@ -149,6 +152,9 @@ class Tagger():
         parsed: t.Union[t.NamedTuple, np.ndarray] = self._parse(tags)
         return parsed
 
+    #===========================================================================
+    # Parse to record arrays
+    #===========================================================================
     def _smallest_integer_type(self, field):
         # object dtype to prevent overflow
         nbits = np.array([8, 16, 32, 64], dtype=object)
@@ -235,6 +241,9 @@ class Tagger():
 
         return np.rec.array(struct)
 
+    #===========================================================================
+    # Generate tags
+    #===========================================================================
     def tag(self, *values, **kwvalues):
         """Create tags from the spec.
 
