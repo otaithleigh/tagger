@@ -3,6 +3,7 @@ import warnings
 from collections import namedtuple, OrderedDict
 
 import numpy as np
+from numpy.lib.recfunctions import unstructured_to_structured
 
 
 def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
@@ -82,6 +83,9 @@ class Tagger():
         # Generate ufunc for parsing.
         self._parse = np.frompyfunc(self._parse_single, nin=1, nout=1)
 
+        # Generate dtype for parse_record.
+        self.dtype = self._record_dtype()
+
     def process_tag(self, tag: int):
         """Process a single tag.
 
@@ -139,6 +143,92 @@ class Tagger():
         """
         parsed: t.Union[t.NamedTuple, np.ndarray] = self._parse(tags)
         return parsed
+
+    def _smallest_integer_type(self, field):
+        # object dtype to prevent overflow
+        nbits = np.array([8, 16, 32, 64], dtype=object)
+        uint_max = 2**nbits - 1
+
+        nbits = nbits[self.max(field) <= uint_max][0]
+        return np.dtype(f'uint{nbits}')
+
+    def _record_dtype(self):
+        fields = self.spec.keys()
+        dtypes = [self._smallest_integer_type(field) for field in fields]
+        return np.dtype([*zip(fields, dtypes)])
+
+    def parse_record(self, tags: t.Union[int, np.ndarray]):
+        """Parse tags into a NumPy record array.
+
+        Parameters
+        ----------
+        tags : array_like
+            Integer tag(s) to parse. Each tag must have n or fewer digits, where
+            n is the length of the specifier used to construct this object.
+
+        Returns
+        -------
+        recarray
+            Tags parsed into record array.
+
+        Example
+        -------
+        >>> tagger = Tagger(['kind', 'story', 'story', 'num', 'num'])
+        >>> tagger.parse(10101)
+        rec.array((1, 1, 1),
+                  dtype=[('kind', 'u1'), ('story', 'u1'), ('num', 'u1')])
+        >>> tagger.parse([10101, 10102])
+        rec.array([(1, 1, 1), (1, 1, 2)],
+                  dtype=[('kind', 'u1'), ('story', 'u1'), ('num', 'u1')])
+
+        Record arrays can be accessed in multiple ways:
+
+        >>> tags = tagger.parse([10101, 10102, 10203])
+        >>> tags.kind
+        array([1, 1, 1], dtype=uint8)
+        >>> tags[1]
+        (1, 1, 2)
+        >>> type(tags[1])
+        numpy.record
+        """
+        tags: np.ndarray = np.asarray(tags)
+
+        if np.any(tags < 0):
+            raise ValueError('Tags must be non-negative')
+
+        #--------------------------
+        # Check length of tags.
+        #--------------------------
+        # Ignore divide by zero warning that occurs with log10(0) -> -inf.
+        with np.errstate(divide='ignore'):
+            nd = np.log10(tags)
+
+        nd = np.maximum(nd, 0)  # Catch edge case where log10(0) -> -inf.
+        nd = np.max(nd)  # Get the maximum length out of all the tags.
+        nd = np.ceil(nd).astype('uint')  # Get a usable integer
+
+        if nd > self.max_length:
+            raise ValueError(f'tags have at most {nd} digits, exceeds maximum '
+                             f'digits for the spec ({self.max_length})')
+
+        #-------------
+        # Parse
+        #-------------
+        # Construct "index" to pull appropriate pieces out of each integer.
+        digit_index: np.ndarray = np.array(
+            [*reversed(self._num_places_to_shift.values())])
+        digit_index.shape += (1, ) * tags.ndim
+        indexed = tags // 10**digit_index
+
+        # Tags are spread out along axis 0, apply modulo along it to get values.
+        exponents = np.array([*self.spec.values()])
+        parsed = np.apply_along_axis(np.mod, 0, indexed, 10**exponents)
+
+        # Convert to structured array. Transpose once to match with dtype shape,
+        # and again to match shape of `tags`.
+        struct = unstructured_to_structured(parsed.T, dtype=self.dtype).T
+
+        return np.rec.array(struct)
 
     def tag(self, *values, **kwvalues):
         """Create tags from the spec.
