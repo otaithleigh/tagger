@@ -26,8 +26,6 @@ test:
     - pytest
   source_files:
     - test
-  commands:
-    - pytest -W ignore::DeprecationWarning
 
 about:
   home: {{ data.get('url') }}
