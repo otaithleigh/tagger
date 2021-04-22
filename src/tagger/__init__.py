@@ -1,13 +1,13 @@
-import collections
 import typing as t
 import warnings
+from collections import namedtuple, OrderedDict
 
 import numpy as np
 
 
 def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
     """Parse a spec, transforming it into an OrderedDict."""
-    spec_dict = collections.OrderedDict()
+    spec_dict = OrderedDict()
 
     # Iterate over the spec, creating a new entry
     # in spec_dict for each new field name.
@@ -58,7 +58,7 @@ class Tagger():
         self.num_fields = len(self.spec)
         self.max_length = len(spec)
         self.mapping = {} if mapping is None else mapping
-        self._tagfactory = collections.namedtuple('Tag', self.spec.keys())
+        self._tagfactory = namedtuple('Tag', self.spec.keys())
 
         # Determine how many places each field needs to be shifted by to create
         # the tag. The first field doesn't need to be shifted at all, the second
