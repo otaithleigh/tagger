@@ -1,5 +1,34 @@
 import collections
+import typing as t
+
 import numpy as np
+
+
+def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
+    """Parse a spec, transforming it into an OrderedDict."""
+    spec_dict = collections.OrderedDict()
+
+    # Iterate over the spec, creating a new entry
+    # in spec_dict for each new field name.
+    prev_field = None
+    for field in spec:
+        # Convert and check that it's a valid identifier.
+        field = str(field)
+        if not field.isidentifier():
+            raise ValueError(
+                f'field names must be valid identifiers: {field!r}')
+
+        # Check for new field.
+        if field != prev_field:
+            # Check for non-contiguous fields.
+            if field in spec_dict:
+                raise ValueError(f'field {field!r} is non-contiguous')
+            spec_dict[field] = 0
+
+        spec_dict[field] += 1
+        prev_field = field
+
+    return spec_dict
 
 
 class Tagger():
@@ -13,12 +42,12 @@ class Tagger():
     specifier are zero-filled to the specifier's length -- so the tag 104 is
     equivalent to the tag 00104 for a specifier that has five digits.
     """
-    def __init__(self, spec, mapping=None):
+    def __init__(self, spec: t.List[str], mapping: dict = None):
         """
         Parameters
         ----------
-        spec : iterable
-            Iterable of field names that define the meanings of each digit in
+        spec : list[str]
+            List of field names that define the meanings of each digit in
             processed tags. Fields must be contiguous -- ['kind', 'kind', 'num']
             is acceptable, but ['kind', 'num', 'kind'] is not.
 
@@ -27,29 +56,7 @@ class Tagger():
             need to be defined for every field; if not present, the integer is
             returned unchanged for that field.
         """
-        # Process the spec, transforming it into an OrderedDict.
-        spec_dict = collections.OrderedDict()
-        # Iterate over the spec, creating a new entry
-        # in spec_dict for each new field name.
-        prev_field = None
-        for field in spec:
-            # Convert and check that it's a valid identifier.
-            field = str(field)
-            if not field.isidentifier():
-                raise ValueError(
-                    f'field names must be valid identifiers: {field!r}')
-
-            # Check for new field.
-            if field != prev_field:
-                # Check for non-contiguous fields.
-                if field in spec_dict:
-                    raise ValueError(f'field {field!r} is non-contiguous')
-                spec_dict[field] = 0
-
-            spec_dict[field] += 1
-            prev_field = field
-
-        self.spec = spec_dict
+        self.spec = _parse_spec(spec)
         self.num_fields = len(self.spec)
         self.max_length = len(spec)
         self.mapping = {} if mapping is None else mapping
