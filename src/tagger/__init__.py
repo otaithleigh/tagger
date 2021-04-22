@@ -69,7 +69,7 @@ class Tagger():
         digits = list(reversed(self.spec.values()))
         num_places_to_shift = np.cumsum(digits)
         num_places_to_shift = [0, *num_places_to_shift[:-1]]
-        self._num_places_to_shift = dict(zip(fields, num_places_to_shift))
+        self._num_places_to_shift = OrderedDict(zip(fields, num_places_to_shift))
 
         # Determine ranges for slicing into str representations of tags.
         spec_indices = [spec.index(field) for field in self.spec.keys()]
