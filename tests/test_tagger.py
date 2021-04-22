@@ -1,5 +1,5 @@
 import numpy as np
-from pytest import raises
+from pytest import raises, warns
 from tagger import Tagger
 
 
@@ -9,9 +9,16 @@ def test_contiguous_fields():
         tagger = Tagger(['type', 'story', 'num', 'story', 'num'])
 
 
+def test_process_tag():
+    tagger = Tagger(['type'])
+    with warns(DeprecationWarning):
+        tag = tagger.process_tag(1)
+    assert tag.type == 1
+
+
 def test_basics():
     tagger = Tagger(['kind', 'alpha', 'beta'])
-    tag = tagger.process_tag(103)
+    tag = tagger.parse(103)
     assert tag.kind == 1
     assert tag.alpha == 0
     assert tag.beta == 3
@@ -19,10 +26,18 @@ def test_basics():
 
 def test_empty_leading_field():
     tagger = Tagger(['kind', 'alpha', 'beta'])
-    tag = tagger.process_tag(33)
+    tag = tagger.parse(33)
     assert tag.kind == 0
     assert tag.alpha == 3
     assert tag.beta == 3
+
+
+def test_parse_multiple_tags():
+    tagger = Tagger(['type', 'spud'])
+    tags = tagger.parse([12, 24, 26])
+    assert tags[0] == (1, 2)
+    assert tags[1] == (2, 4)
+    assert tags[2] == (2, 6)
 
 
 def test_multidimensional_arrays():

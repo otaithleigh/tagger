@@ -1,5 +1,6 @@
 import collections
 import typing as t
+import warnings
 
 import numpy as np
 
@@ -32,13 +33,10 @@ def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
 
 
 class Tagger():
-    """Process structured integer tags into meaningful fields.
+    """Generate and parse structured integer tags.
 
-    Tagger takes a mapping of field names to number of digits, and processes
-    tags into named tuples.
-
-    Tagger takes an iterable of field names, specified for each digit of a tag,
-    and processes tags into named tuples. Tags that have fewer digits than the
+    Tagger takes a list of field names, specified for each digit of a tag, and
+    processes tags into named tuples. Tags that have fewer digits than the
     specifier are zero-filled to the specifier's length -- so the tag 104 is
     equivalent to the tag 00104 for a specifier that has five digits.
     """
@@ -81,7 +79,10 @@ class Tagger():
             for i in range(self.num_fields)
         ]
 
-    def process_tag(self, tag):
+        # Generate ufunc for parsing.
+        self._parse = np.frompyfunc(self._parse_single, nin=1, nout=1)
+
+    def process_tag(self, tag: int):
         """Process a single tag.
 
         Parameters
@@ -95,6 +96,13 @@ class Tagger():
         Tag
             Tag processed into descriptive fields.
         """
+        warnings.warn(
+            '`process_tag` has been deprecated, and will be removed '
+            'in version 1.0.0. Use `parse` instead.',
+            category=DeprecationWarning)
+        return self._parse_single(tag)
+
+    def _parse_single(self, tag: int):
         tagstr = f'{tag:0{self.max_length}d}'
         if len(tagstr) > self.max_length:
             raise ValueError(f'tag {tagstr!r} exceeds specified length')
@@ -105,6 +113,32 @@ class Tagger():
             field_values[field] = map_field(int(tagstr[slice]))
 
         return self._tagfactory(**field_values)
+
+    def parse(self, tags: t.Union[int, np.ndarray]):
+        """Parse tags.
+
+        Parameters
+        ----------
+        tags : array_like
+            Integer tag(s) to parse. Each tag must have n or fewer digits, where
+            n is the length of the specifier used to construct this object.
+
+        Returns
+        -------
+        array[Tag]
+            Tags parsed into descriptive fields.
+
+        Example
+        -------
+        >>> tagger = Tagger(['kind', 'story', 'story', 'num', 'num'])
+        >>> tagger.parse(10101)
+        Tag(kind=1, story=1, num=1)
+        >>> tagger.parse([10101, 10102])
+        array([Tag(kind=1, story=1, num=1), Tag(kind=1, story=1, num=2)],
+              dtype=object)
+        """
+        parsed: t.Union[t.NamedTuple, np.ndarray] = self._parse(tags)
+        return parsed
 
     def tag(self, *values, **kwvalues):
         """Create tags from the spec.
