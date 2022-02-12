@@ -185,16 +185,16 @@ class Tagger():
         Example
         -------
         >>> tagger = Tagger(['kind', 'story', 'story', 'num', 'num'])
-        >>> tagger.parse(10101)
+        >>> tagger.parse_record(10101)
         rec.array((1, 1, 1),
                   dtype=[('kind', 'u1'), ('story', 'u1'), ('num', 'u1')])
-        >>> tagger.parse([10101, 10102])
+        >>> tagger.parse_record([10101, 10102])
         rec.array([(1, 1, 1), (1, 1, 2)],
                   dtype=[('kind', 'u1'), ('story', 'u1'), ('num', 'u1')])
 
         Record arrays can be accessed in multiple ways:
 
-        >>> tags = tagger.parse([10101, 10102, 10203])
+        >>> tags = tagger.parse_record([10101, 10102, 10203])
         >>> tags.kind
         array([1, 1, 1], dtype=uint8)
         >>> tags[1]
