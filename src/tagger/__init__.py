@@ -111,7 +111,8 @@ class Tagger():
         warnings.warn(
             '`process_tag` has been deprecated, and will be removed '
             'in version 1.0.0. Use `parse` instead.',
-            category=DeprecationWarning)
+            category=DeprecationWarning,
+            stacklevel=2)
         return self._parse_single(tag)
 
     def _parse_single(self, tag: int):
