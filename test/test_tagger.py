@@ -40,6 +40,12 @@ def test_parse_multiple_tags():
     assert tags[2] == (2, 6)
 
 
+def test_single():
+    tagger = Tagger('knc')
+    tag = tagger.tag(1, 1, 1)
+    assert tag == 111 and isinstance(tag, int)
+
+
 def test_multidimensional_arrays():
     tagger = Tagger('knncc')
     tags = tagger.tag(3, [4, 5], [6, 7, 8])

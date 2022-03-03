@@ -247,7 +247,7 @@ class Tagger():
     #===========================================================================
     # Generate tags
     #===========================================================================
-    def tag(self, *values, **kwvalues):
+    def tag(self, *values, **kwvalues) -> t.Union[int, np.ndarray]:
         """Create tags from the spec.
 
         Values can be specified either using positional or keyword arguments,
@@ -273,10 +273,11 @@ class Tagger():
 
         Returns
         -------
-        np.ndarray
+        int | np.ndarray
             Array of the created tag(s). For N inputs of length A, B, C, ..., an
             array of size A-by-B-by-C-by-... is created. Dimensions with length
-            1 are squeezed out.
+            1 are squeezed out. If only a single tag was requested, an int is
+            returned instead of a scalar array.
 
         Examples
         --------
@@ -328,8 +329,12 @@ class Tagger():
                 [-1 if j == i else 1 for j in range(self.num_fields)])
             tags += field_value * 10**self._num_places_to_shift[field]
 
-        # Squeeze the generated array to remove any singular dimensions.
-        return tags.squeeze()
+        # Squeeze the generated array to remove any singular dimensions. If only
+        # generating a single tag, extract from the array object.
+        if tags.size == 1:
+            return tags.item()
+        else:
+            return tags.squeeze()
 
     def max(self, field):
         """Return the maximum possible value for a field."""
