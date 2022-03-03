@@ -37,6 +37,12 @@ def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
     return spec_dict
 
 
+# object dtype to prevent overflow
+_NBITS = np.array([8, 16, 32, 64], dtype=object)
+_UINT_MAX = (2 << _NBITS - 1) - 1
+"""Maximum values for 8-, 16-, 32-, and 64-bit unsigned integers."""
+
+
 class Tagger():
     """Generate and parse structured integer tags.
 
@@ -157,11 +163,7 @@ class Tagger():
     # Parse to record arrays
     #===========================================================================
     def _smallest_integer_type(self, field):
-        # object dtype to prevent overflow
-        nbits = np.array([8, 16, 32, 64], dtype=object)
-        uint_max = 2**nbits - 1
-
-        nbits = nbits[self.max(field) <= uint_max][0]
+        nbits = _NBITS[self.max(field) <= _UINT_MAX][0]
         return np.dtype(f'uint{nbits}')
 
     def _record_dtype(self):
