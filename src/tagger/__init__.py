@@ -257,7 +257,7 @@ class Tagger():
 
         If arrays are specified for the values, they must be vectors (i.e. only
         one non-singular dimension). The tags are returned as an array of
-        integers
+        integers.
 
         Parameters
         ----------
