@@ -279,6 +279,19 @@ class Tagger():
             1 are squeezed out. If only a single tag was requested, an int is
             returned instead of a scalar array.
 
+        Raises
+        ------
+        TypeError
+            - If values could not be cast to int
+        ValueError
+            - If positional and keyword arguments are mixed
+            - If values were not provided for all fields
+            - If values are neither scalars nor vectors (i.e., ndim > 1)
+            - If any values are negative
+            - If any value exceeds the available digits for its field (e.g.,
+              requesting the value 10 for a field with only one digit specified
+              in the tag spec.)
+
         Examples
         --------
         >>> tagger = Tagger(['type', 'story', 'story', 'num', 'num'])
