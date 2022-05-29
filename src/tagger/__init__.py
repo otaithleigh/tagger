@@ -311,10 +311,13 @@ class Tagger():
             name_value_generator = kwvalues.items()
 
         # Transform inputs to NumPy arrays of integers in a dict
-        values = {
-            name: np.asarray(value).astype(int, copy=False)
-            for name, value in name_value_generator
-        }
+        try:
+            values = {
+                name: np.asarray(value).astype(int, copy=False)
+                for name, value in name_value_generator
+            }
+        except Exception as exc:
+            raise TypeError('Could not convert values to int') from exc
 
         # Values must be provided for all fields
         if len(values) != self.num_fields:
