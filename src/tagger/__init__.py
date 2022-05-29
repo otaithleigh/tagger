@@ -281,8 +281,25 @@ class Tagger():
 
         Examples
         --------
-        >>> tagger = Tagger({'num': 2, 'story': 2, 'kind': 1})
-        >>> tagger.tag()
+        >>> tagger = Tagger(['type', 'story', 'story', 'num', 'num'])
+
+        Specify using positional arguments:
+
+        >>> tagger.tag(2, 3, 12)
+        20312
+
+        Specify using keyword arguments:
+
+        >>> tagger.tag(type=2, story=3, num=12)
+        20312
+
+        Generate arrays of tags from multiple inputs:
+
+        >>> tagger.tag(type=2, story=[3, 4], num=12)
+        array([20312, 20412])
+        >>> tagger.tag(type=2, story=[3, 4], num=[12, 15, 13])
+        array([[20312, 20315, 20313],
+               [20412, 20415, 20413]])
         """
         if values and kwvalues:
             raise ValueError('Cannot mix positional and keyword arguments')
