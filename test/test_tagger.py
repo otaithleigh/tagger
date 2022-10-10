@@ -30,6 +30,18 @@ def test_spec_dict():
     assert tagger.max_length == 6
 
 
+def test_spec_dict_bad_key_type():
+    with raises(TypeError):
+        _ = Tagger({1: 2})
+    with raises(TypeError):
+        _ = Tagger({b'a': 2})
+
+
+def test_spec_dict_bad_value_type():
+    with raises(TypeError):
+        _ = Tagger({'aaah': 3.0})
+
+
 def test_empty_leading_field():
     tagger = Tagger(['kind', 'alpha', 'beta'])
     tag = tagger.parse(33)
