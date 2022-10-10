@@ -9,9 +9,16 @@ __all__ = [
     'Tagger',
 ]
 
+Spec = t.Union[t.List[str], t.Dict[str, int]]
 
-def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
+
+def _parse_spec(spec: Spec) -> t.OrderedDict[str, int]:
     """Parse a spec, transforming it into an OrderedDict."""
+    if isinstance(spec, dict):
+        _check_all_keys_are_str(spec)
+        _check_all_values_are_int(spec)
+        return OrderedDict(spec)
+
     spec_dict = OrderedDict()
 
     # Iterate over the spec, creating a new entry
@@ -37,6 +44,19 @@ def _parse_spec(spec: t.List[str]) -> t.OrderedDict[str, int]:
     return spec_dict
 
 
+def _check_all_keys_are_str(spec: dict):
+    for key in spec.keys():
+        if not isinstance(key, str):
+            raise TypeError('spec keys must be str')
+
+
+def _check_all_values_are_int(spec: dict):
+    for value in spec.values():
+        if not isinstance(value, int):
+            raise TypeError('spec values must be int')
+
+
+
 # object dtype to prevent overflow
 _NBITS = np.array([8, 16, 32, 64], dtype=object)
 _UINT_MAX = (2 << _NBITS - 1) - 1
@@ -46,19 +66,21 @@ _UINT_MAX = (2 << _NBITS - 1) - 1
 class Tagger():
     """Generate and parse structured integer tags.
 
-    Tagger takes a list of field names, specified for each digit of a tag, and
-    processes tags into named tuples. Tags that have fewer digits than the
+    Tagger takes a list or dict of field names, specifying each digit of a tag,
+    and processes tags into named tuples. Tags that have fewer digits than the
     specifier are zero-filled to the specifier's length -- so the tag 104 is
     equivalent to the tag 00104 for a specifier that has five digits.
     """
-    def __init__(self, spec: t.List[str], mapping: dict = None):
+    def __init__(self, spec: Spec, mapping: dict = None):
         """
         Parameters
         ----------
-        spec : list[str]
-            List of field names that define the meanings of each digit in
-            processed tags. Fields must be contiguous -- ['kind', 'kind', 'num']
-            is acceptable, but ['kind', 'num', 'kind'] is not.
+        spec : list[str], dict[str, int]
+            Tag specification. May be either a list where each element
+            corresponds to a digit, or a dict mapping field names to number of
+            digits in that field. If a list, the fields must be contiguous --
+            ['kind', 'kind', 'num'] is acceptable, but ['kind', 'num', 'kind']
+            is not.
 
         mapping : dict, optional
             Dict of callables that post-process the evaluated integers. Does not
@@ -67,7 +89,7 @@ class Tagger():
         """
         self.spec = _parse_spec(spec)
         self.num_fields = len(self.spec)
-        self.max_length = len(spec)
+        self.max_length = sum(self.spec.values())
         self._max = dict(zip(self.spec, map(max_field_size, self.spec.values())))
         self.mapping = {} if mapping is None else mapping
         self._tagfactory = namedtuple('Tag', self.spec.keys())
@@ -85,18 +107,23 @@ class Tagger():
                                                     num_places_to_shift))
 
         # Determine ranges for slicing into str representations of tags.
-        spec_indices = [spec.index(field) for field in self.spec.keys()]
-        spec_indices.append(None)
-        self._field_slices = [
-            slice(spec_indices[i], spec_indices[i + 1])
-            for i in range(self.num_fields)
-        ]
+        self._field_slices = self._calculate_field_slices()
 
         # Generate ufunc for parsing.
         self._parse = np.frompyfunc(self._parse_single, nin=1, nout=1)
 
         # Generate dtype for parse_record.
         self.dtype = self._record_dtype()
+
+    def _calculate_field_slices(self) -> t.List[slice]:
+        """Determine ranges for slicing into str representations of tags."""
+        slices = []
+        start = 0
+        for ndigits in self.spec.values():
+            stop = start + ndigits
+            slices.append(slice(start, stop))
+            start = stop
+        return slices
 
     #===========================================================================
     # Parse to named tuples

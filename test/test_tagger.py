@@ -24,6 +24,11 @@ def test_basics():
     assert tag.beta == 3
 
 
+def test_spec_dict():
+    tagger = Tagger({'kind': 2, 'spud': 4})
+    assert tagger.spec == {'kind': 2, 'spud': 4}
+    assert tagger.max_length == 6
+
 def test_empty_leading_field():
     tagger = Tagger(['kind', 'alpha', 'beta'])
     tag = tagger.parse(33)
