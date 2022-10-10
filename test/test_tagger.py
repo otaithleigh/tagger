@@ -54,6 +54,6 @@ def test_multidimensional_arrays():
 
 def test_max():
     tagger = Tagger('kkknnnnnncc')
-    assert tagger.max('k') == 999
-    assert tagger.max('n') == 999999
-    assert tagger.max('c') == 99
+    assert tagger._max['k'] == 999
+    assert tagger._max['n'] == 999999
+    assert tagger._max['c'] == 99

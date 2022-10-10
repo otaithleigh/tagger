@@ -68,6 +68,7 @@ class Tagger():
         self.spec = _parse_spec(spec)
         self.num_fields = len(self.spec)
         self.max_length = len(spec)
+        self._max = dict(zip(self.spec, map(max_field_size, self.spec.values())))
         self.mapping = {} if mapping is None else mapping
         self._tagfactory = namedtuple('Tag', self.spec.keys())
 
@@ -163,7 +164,7 @@ class Tagger():
     # Parse to record arrays
     #===========================================================================
     def _smallest_integer_type(self, field):
-        nbits = _NBITS[self.max(field) <= _UINT_MAX][0]
+        nbits = _NBITS[self._max[field] <= _UINT_MAX][0]
         return np.dtype(f'uint{nbits}')
 
     def _record_dtype(self):
@@ -348,7 +349,7 @@ class Tagger():
                 raise ValueError('All values must be nonnegative integers')
 
             # Check bounds.
-            if np.any(value > self.max(field)):
+            if np.any(value > self._max[field]):
                 raise ValueError(f'{value} exceeds the available digits '
                                  f'for field {field!r}')
 
@@ -369,8 +370,17 @@ class Tagger():
         else:
             return tags.squeeze()
 
-    def max(self, field):
-        """Return the maximum possible value for a field."""
-        # for a field that supports the range 000-999, there are three digits,
-        # so the maximum value is 10**3 - 1 = 999.
-        return 10**self.spec[field] - 1
+
+def max_field_size(nd: int) -> int:
+    """Return the maximum possible value for a field.
+
+    Parameters
+    ----------
+    nd : int
+        Number of digits assigned to the field.
+    """
+    # for a field that supports the range 000-999, there are three digits,
+    # so the maximum value is 10**3 - 1 = 999.
+    if nd < 1:
+        raise ValueError('Field should have at least 1 digit')
+    return 10**nd - 1
