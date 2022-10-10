@@ -125,6 +125,10 @@ class Tagger():
             start = stop
         return slices
 
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f'{name}(spec={dict(self.spec)}, mapping={self.mapping})'
+
     #===========================================================================
     # Parse to named tuples
     #===========================================================================
