@@ -29,6 +29,9 @@ Examples of valid tags under this specification:
 - 10302 (type 1, story 3, num 2)
 - 104 (type 0, story 1, num 4)
 
+Parsing
+-------
+
 The tagger can parse existing tags into named tuples, or generate new tags in
 NumPy arrays.
 
@@ -60,3 +63,26 @@ But any callable can be used:
 >>> tagger = Tagger(['type', 'story', 'num'], mapping={'type': lambda x: x + 1})
 >>> tagger.parse(102)
 Tag(type=2, story=0, num=2)
+
+Generating
+----------
+
+The tagger can also generate new tags according to the spec.
+
+Specify using positional arguments:
+
+>>> tagger.tag(2, 3, 12)
+20312
+
+Specify using keyword arguments:
+
+>>> tagger.tag(type=2, story=3, num=12)
+20312
+
+Generate arrays of tags from multiple inputs:
+
+>>> tagger.tag(type=2, story=[3, 4], num=12)
+array([20312, 20412])
+>>> tagger.tag(type=2, story=[3, 4], num=[12, 15, 13])
+array([[20312, 20315, 20313],
+       [20412, 20415, 20413]])
