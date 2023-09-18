@@ -6,7 +6,8 @@ from collections import namedtuple, OrderedDict
 import numpy as np
 from numpy.lib.recfunctions import unstructured_to_structured
 
-__version__ = importlib.resources.files(__package__).joinpath('__version__').read_text()
+# TODO: when dropping Python 3.8, switch this to files() API
+__version__ = importlib.resources.read_text(__package__, "__version__")
 
 __all__ = [
     "Tagger",
