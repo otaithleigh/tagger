@@ -6,7 +6,7 @@ import numpy as np
 from numpy.lib.recfunctions import unstructured_to_structured
 
 __all__ = [
-    'Tagger',
+    "Tagger",
 ]
 
 Spec = t.Union[t.List[str], t.Dict[str, int]]
@@ -28,14 +28,13 @@ def _parse_spec(spec: Spec) -> t.OrderedDict[str, int]:
         # Convert and check that it's a valid identifier.
         field = str(field)
         if not field.isidentifier():
-            raise ValueError(
-                f'field names must be valid identifiers: {field!r}')
+            raise ValueError(f"field names must be valid identifiers: {field!r}")
 
         # Check for new field.
         if field != prev_field:
             # Check for non-contiguous fields.
             if field in spec_dict:
-                raise ValueError(f'field {field!r} is non-contiguous')
+                raise ValueError(f"field {field!r} is non-contiguous")
             spec_dict[field] = 0
 
         spec_dict[field] += 1
@@ -47,14 +46,13 @@ def _parse_spec(spec: Spec) -> t.OrderedDict[str, int]:
 def _check_all_keys_are_str(spec: dict):
     for key in spec.keys():
         if not isinstance(key, str):
-            raise TypeError('spec keys must be str')
+            raise TypeError("spec keys must be str")
 
 
 def _check_all_values_are_int(spec: dict):
     for value in spec.values():
         if not isinstance(value, int):
-            raise TypeError('spec values must be int')
-
+            raise TypeError("spec values must be int")
 
 
 # object dtype to prevent overflow
@@ -63,7 +61,7 @@ _UINT_MAX = (2 << _NBITS - 1) - 1
 """Maximum values for 8-, 16-, 32-, and 64-bit unsigned integers."""
 
 
-class Tagger():
+class Tagger:
     """Generate and parse structured integer tags.
 
     Tagger takes a list or dict of field names, specifying each digit of a tag,
@@ -71,6 +69,7 @@ class Tagger():
     specifier are zero-filled to the specifier's length -- so the tag 104 is
     equivalent to the tag 00104 for a specifier that has five digits.
     """
+
     def __init__(self, spec: Spec, mapping: dict = None):
         """
         Parameters
@@ -92,7 +91,7 @@ class Tagger():
         self.max_length = sum(self.spec.values())
         self._max = dict(zip(self.spec, map(max_field_size, self.spec.values())))
         self.mapping = {} if mapping is None else mapping
-        self._tagfactory = namedtuple('Tag', self.spec.keys())
+        self._tagfactory = namedtuple("Tag", self.spec.keys())
 
         # Determine how many places each field needs to be shifted by to create
         # the tag. The first field doesn't need to be shifted at all, the second
@@ -103,8 +102,7 @@ class Tagger():
         digits = list(reversed(self.spec.values()))
         num_places_to_shift = np.cumsum(digits)
         num_places_to_shift = [0, *num_places_to_shift[:-1]]
-        self._num_places_to_shift = OrderedDict(zip(fields,
-                                                    num_places_to_shift))
+        self._num_places_to_shift = OrderedDict(zip(fields, num_places_to_shift))
 
         # Determine ranges for slicing into str representations of tags.
         self._field_slices = self._calculate_field_slices()
@@ -127,11 +125,11 @@ class Tagger():
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
-        return f'{name}(spec={dict(self.spec)}, mapping={self.mapping})'
+        return f"{name}(spec={dict(self.spec)}, mapping={self.mapping})"
 
-    #===========================================================================
+    # ===========================================================================
     # Parse to named tuples
-    #===========================================================================
+    # ===========================================================================
     def process_tag(self, tag: int):
         """Process a single tag.
 
@@ -147,16 +145,17 @@ class Tagger():
             Tag processed into descriptive fields.
         """
         warnings.warn(
-            '`process_tag` has been deprecated, and will be removed '
-            'in version 1.0.0. Use `parse` instead.',
+            "`process_tag` has been deprecated, and will be removed "
+            "in version 1.0.0. Use `parse` instead.",
             category=DeprecationWarning,
-            stacklevel=2)
+            stacklevel=2,
+        )
         return self._parse_single(tag)
 
     def _parse_single(self, tag: int):
-        tagstr = f'{tag:0{self.max_length}d}'
+        tagstr = f"{tag:0{self.max_length}d}"
         if len(tagstr) > self.max_length:
-            raise ValueError(f'tag {tagstr!r} exceeds specified length')
+            raise ValueError(f"tag {tagstr!r} exceeds specified length")
 
         field_values = {}
         for field, slice in zip(self.spec.keys(), self._field_slices):
@@ -191,12 +190,12 @@ class Tagger():
         parsed: t.Union[t.NamedTuple, np.ndarray] = self._parse(tags)
         return parsed
 
-    #===========================================================================
+    # ===========================================================================
     # Parse to record arrays
-    #===========================================================================
+    # ===========================================================================
     def _smallest_integer_type(self, field):
         nbits = _NBITS[self._max[field] <= _UINT_MAX][0]
-        return np.dtype(f'uint{nbits}')
+        return np.dtype(f"uint{nbits}")
 
     def _record_dtype(self):
         fields = self.spec.keys()
@@ -240,30 +239,33 @@ class Tagger():
         tags: np.ndarray = np.asarray(tags)
 
         if np.any(tags < 0):
-            raise ValueError('Tags must be non-negative')
+            raise ValueError("Tags must be non-negative")
 
-        #--------------------------
+        # --------------------------
         # Check length of tags.
-        #--------------------------
+        # --------------------------
         # Ignore divide by zero warning that occurs with log10(0) -> -inf.
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             nd = np.log10(tags)
 
         nd = np.maximum(nd, 0)  # Catch edge case where log10(0) -> -inf.
         nd = np.max(nd)  # Get the maximum length out of all the tags.
-        nd = np.ceil(nd).astype('uint')  # Get a usable integer
+        nd = np.ceil(nd).astype("uint")  # Get a usable integer
 
         if nd > self.max_length:
-            raise ValueError(f'tags have at most {nd} digits, exceeds maximum '
-                             f'digits for the spec ({self.max_length})')
+            raise ValueError(
+                f"tags have at most {nd} digits, exceeds maximum "
+                f"digits for the spec ({self.max_length})"
+            )
 
-        #-------------
+        # -------------
         # Parse
-        #-------------
+        # -------------
         # Construct "index" to pull appropriate pieces out of each integer.
         digit_index: np.ndarray = np.array(
-            [*reversed(self._num_places_to_shift.values())])
-        digit_index.shape += (1, ) * tags.ndim
+            [*reversed(self._num_places_to_shift.values())]
+        )
+        digit_index.shape += (1,) * tags.ndim
         indexed = tags // 10**digit_index
 
         # Tags are spread out along axis 0, apply modulo along it to get values.
@@ -276,9 +278,9 @@ class Tagger():
 
         return np.rec.array(struct)
 
-    #===========================================================================
+    # ===========================================================================
     # Generate tags
-    #===========================================================================
+    # ===========================================================================
     def tag(self, *values, **kwvalues) -> t.Union[int, np.ndarray]:
         """Create tags from the spec.
 
@@ -347,7 +349,7 @@ class Tagger():
                [20412, 20415, 20413]])
         """
         if values and kwvalues:
-            raise ValueError('Cannot mix positional and keyword arguments')
+            raise ValueError("Cannot mix positional and keyword arguments")
 
         # If values specified by position, transform to dict
         if values:
@@ -362,27 +364,30 @@ class Tagger():
                 for name, value in name_value_generator
             }
         except Exception as exc:
-            raise TypeError('Could not convert values to int') from exc
+            raise TypeError("Could not convert values to int") from exc
 
         # Values must be provided for all fields
         if len(values) != self.num_fields:
-            raise ValueError('Insufficient number of values '
-                             f'(expected {self.num_fields}, got {len(values)})')
+            raise ValueError(
+                "Insufficient number of values "
+                f"(expected {self.num_fields}, got {len(values)})"
+            )
 
         # Check inputs.
         for field, value in values.items():
             # Only scalars and vectors allowed
             if value.squeeze().ndim > 1:
-                raise ValueError('Specified values must be scalars or vectors')
+                raise ValueError("Specified values must be scalars or vectors")
 
             # Negative values don't make any sense here.
             if np.any(value < 0):
-                raise ValueError('All values must be nonnegative integers')
+                raise ValueError("All values must be nonnegative integers")
 
             # Check bounds.
             if np.any(value > self._max[field]):
-                raise ValueError(f'{value} exceeds the available digits '
-                                 f'for field {field!r}')
+                raise ValueError(
+                    f"{value} exceeds the available digits for field {field!r}"
+                )
 
         # Create the tags. The passed values are reshaped into vectors with
         # ndim == num_fields. The non-singular dimension is different for each
@@ -391,8 +396,9 @@ class Tagger():
         tags = np.zeros([v.size for v in values.values()], dtype=int)
         for i, field in enumerate(self.spec.keys()):
             field_value = values[field].reshape(
-                [-1 if j == i else 1 for j in range(self.num_fields)])
-            tags += field_value * 10**self._num_places_to_shift[field]
+                [-1 if j == i else 1 for j in range(self.num_fields)]
+            )
+            tags += field_value * 10 ** self._num_places_to_shift[field]
 
         # Squeeze the generated array to remove any singular dimensions. If only
         # generating a single tag, extract from the array object.
@@ -413,5 +419,5 @@ def max_field_size(nd: int) -> int:
     # for a field that supports the range 000-999, there are three digits,
     # so the maximum value is 10**3 - 1 = 999.
     if nd < 1:
-        raise ValueError('Field should have at least 1 digit')
+        raise ValueError("Field should have at least 1 digit")
     return 10**nd - 1
