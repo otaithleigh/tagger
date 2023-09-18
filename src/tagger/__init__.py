@@ -1,9 +1,12 @@
+import importlib.resources
 import typing as t
 import warnings
 from collections import namedtuple, OrderedDict
 
 import numpy as np
 from numpy.lib.recfunctions import unstructured_to_structured
+
+__version__ = importlib.resources.files(__package__).joinpath('__version__').read_text()
 
 __all__ = [
     "Tagger",
