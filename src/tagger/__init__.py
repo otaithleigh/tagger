@@ -26,7 +26,7 @@ def _parse_spec(spec: Spec) -> t.OrderedDict[str, int]:
     prev_field = None
     for field in spec:
         # Convert and check that it's a valid identifier.
-        field = str(field)
+        field = str(field)  # noqa: PLW2901
         if not field.isidentifier():
             raise ValueError(f"field names must be valid identifiers: {field!r}")
 
@@ -70,7 +70,7 @@ class Tagger:
     equivalent to the tag 00104 for a specifier that has five digits.
     """
 
-    def __init__(self, spec: Spec, mapping: dict = None):
+    def __init__(self, spec: Spec, mapping: t.Optional[dict] = None):
         """
         Parameters
         ----------

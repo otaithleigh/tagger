@@ -1,17 +1,20 @@
+# ruff: noqa: PLR2004
+
 import numpy as np
-from pytest import raises, warns
+import pytest
+
 from tagger import Tagger
 
 
 def test_contiguous_fields():
     """Non-contiguous fields are not allowed."""
-    with raises(ValueError):
-        tagger = Tagger(["type", "story", "num", "story", "num"])
+    with pytest.raises(ValueError, match="field 'story' is non-contiguous"):
+        _ = Tagger(["type", "story", "num", "story", "num"])
 
 
 def test_process_tag():
     tagger = Tagger(["type"])
-    with warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning):
         tag = tagger.process_tag(1)
     assert tag.type == 1
 
@@ -31,14 +34,14 @@ def test_spec_dict():
 
 
 def test_spec_dict_bad_key_type():
-    with raises(TypeError):
+    with pytest.raises(TypeError):
         _ = Tagger({1: 2})
-    with raises(TypeError):
+    with pytest.raises(TypeError):
         _ = Tagger({b"a": 2})
 
 
 def test_spec_dict_bad_value_type():
-    with raises(TypeError):
+    with pytest.raises(TypeError):
         _ = Tagger({"aaah": 3.0})
 
 
@@ -61,7 +64,8 @@ def test_parse_multiple_tags():
 def test_single():
     tagger = Tagger("knc")
     tag = tagger.tag(1, 1, 1)
-    assert tag == 111 and isinstance(tag, int)
+    assert tag == 111
+    assert isinstance(tag, int)
 
 
 def test_multidimensional_arrays():
